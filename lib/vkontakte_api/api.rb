@@ -5,7 +5,7 @@ module VkontakteApi
   module API
     # URL prefix for calling API methods.
     URL_PREFIX = 'https://api.vk.com/method'
-    
+
     class << self
       # API method call.
       # @param [String] method_name A full name of the method.
@@ -17,7 +17,7 @@ module VkontakteApi
         flat_arguments[:v] ||= VkontakteApi.api_version unless VkontakteApi.api_version.nil?
         connection(url: URL_PREFIX, token: token).send(VkontakteApi.http_verb, method_name, flat_arguments).body
       end
-      
+
       # Faraday connection.
       # @param [Hash] options Connection options.
       # @option options [String] :url Connection URL (either full or just prefix).
@@ -26,17 +26,18 @@ module VkontakteApi
       def connection(options = {})
         url   = options.delete(:url)
         token = options.delete(:token)
-        
+
         Faraday.new(url, VkontakteApi.faraday_options) do |builder|
-          builder.request :oauth2, token unless token.nil?
+          builder.authorization :Bearer, token unless token.nil?
+          builder.request :oauth2, token_type: 'bearer'
           builder.request :multipart
           builder.request :url_encoded
           builder.request :retry, VkontakteApi.max_retries
-          
+
           builder.response :vk_logger
           builder.response :mashify
           builder.response :multi_json, preserve_raw: true
-          
+
           builder.adapter VkontakteApi.adapter
         end
       end
